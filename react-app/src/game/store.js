@@ -20,6 +20,9 @@ export const game = {
   dead: false,
   flashAt: 0,
   shakeAt: 0,
+  shakeAmp: 0.14,
+  hitstopUntil: 0,
+  parryAt: -9999,
   resetNonce: 0,
   banner: null,
   upgrades: saved.upgrades || { hp: 0, dmg: 0, stam: 0 },
@@ -30,7 +33,8 @@ export const game = {
     joy: { x: 0, y: 0 },
     run: false,
     attackReq: 0,
-    dodgeReq: 0
+    dodgeReq: 0,
+    parryReq: 0
   }
 }
 
@@ -70,6 +74,19 @@ export function showBanner(text, sub = '') {
   emit()
 }
 
+export function hitStop(ms = 90) {
+  game.hitstopUntil = performance.now() + ms
+}
+
+export function hitstopActive() {
+  return performance.now() < (game.hitstopUntil || 0)
+}
+
+export function shake(amp = 0.14) {
+  game.shakeAt = performance.now()
+  game.shakeAmp = amp
+}
+
 export function stageCleared() {
   game.stage += 1
   game.stageKills = 0
@@ -101,7 +118,7 @@ export function damagePlayer(amount) {
   if (game.dead) return
   game.hp = Math.max(0, game.hp - amount)
   game.flashAt = performance.now()
-  game.shakeAt = performance.now()
+  shake(0.16)
   if (game.hp <= 0) game.dead = true
   emit()
 }
@@ -131,6 +148,7 @@ if (typeof window !== 'undefined') {
     if (e.repeat) return
     if (e.code === 'KeyJ' || e.code === 'KeyF') game.input.attackReq++
     else if (e.code === 'Space') game.input.dodgeReq++
+    else if (e.code === 'KeyQ') game.input.parryReq++
     else if (e.code === 'KeyR') game.input.run = !game.input.run
     game.input.keys[e.code] = true
   })

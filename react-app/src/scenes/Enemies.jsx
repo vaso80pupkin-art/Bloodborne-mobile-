@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 import {
   game,
   emit,
@@ -11,14 +12,26 @@ import {
   bossMaxHp,
   enemyStrikeDamage,
   showBanner,
-  stageCleared
+  stageCleared,
+  hitStop,
+  hitstopActive,
+  shake
 } from '../game/store.js'
-import { playHit, playKill, playGrowl, playBossRoar, playSwing, playHurt } from '../game/audio.js'
+import {
+  playHit,
+  playKill,
+  playGrowl,
+  playBossRoar,
+  playSwing,
+  playHurt,
+  playParrySuccess
+} from '../game/audio.js'
 
 const RANGE_CHASE = 10
 const RANGE_WINDUP = 2.4
 
 export const deathEvents = []
+export const sprayEvents = []
 
 function seededRandom(seed) {
   let s = seed
@@ -35,6 +48,7 @@ function Beast({ spawn }) {
   const eyesRef = useRef(null)
   const bodyRef = useRef(null)
   const bossLightRef = useRef(null)
+  const ringRef = useRef(null)
   const state = useRef({
     alive: true,
     hp: enemyMaxHp(),
@@ -52,23 +66,31 @@ function Beast({ spawn }) {
     hitDone: false,
     deathT: 0,
     playerIframes: 0,
-    growled: false
+    growled: false,
+    vulnerable: false
   })
 
   const takeHit = (dmg, dirX, dirZ) => {
     const st = state.current
     if (!st.alive || game.dead) return
-    st.hp -= dmg
+    st.hp -= st.vulnerable ? dmg * 2 : dmg
     st.x += dirX * 0.5
     st.z += dirZ * 0.5
     playHit()
+    sprayEvents.push({ x: st.x, z: st.z, dirX, dirZ, big: false })
+    hitStop(st.vulnerable ? 120 : 80)
+    shake(st.vulnerable ? 0.1 : 0.05)
     if (st.hp <= 0) {
       st.alive = false
       st.deathT = 0
       playKill()
+      sprayEvents.push({ x: st.x, z: st.z, dirX, dirZ, big: true })
       deathEvents.push({ x: st.x, z: st.z, at: performance.now() })
       registerKill(st.boss)
       if (barWrap.current) barWrap.current.visible = false
+      if (ringRef.current) ringRef.current.visible = false
+      hitStop(150)
+      shake(st.boss ? 0.24 : 0.1)
     }
     emit()
   }
@@ -87,7 +109,8 @@ function Beast({ spawn }) {
   }, [])
 
   useFrame(({ clock }, delta) => {
-    const dt = Math.min(delta, 0.05)
+    const raw = Math.min(delta, 0.05)
+    const dt = hitstopActive() ? raw * 0.1 : raw
     const st = state.current
     const g = group.current
     if (!g) return
@@ -172,6 +195,10 @@ function Beast({ spawn }) {
       st.rotY += (Math.atan2(nx, nz) - st.rotY) * Math.min(1, dt * 8)
       const windupDur = st.boss ? 0.55 : 0.45
       if (g) g.scale.y = g.scale.x * (1 + Math.sin(Math.min(1, Math.max(0, 1 - st.timer / windupDur)) * Math.PI) * 0.12)
+      if (ringRef.current) {
+        ringRef.current.visible = true
+        ringRef.current.material.opacity = 0.2 + 0.6 * Math.min(1, Math.max(0, 1 - st.timer / windupDur))
+      }
       if (st.timer <= 0) {
         st.mode = 'strike'
         st.timer = 0.28
@@ -184,20 +211,43 @@ function Beast({ spawn }) {
       const dash = st.boss ? 10 : 8.5
       st.x += st.dirX * dash * dt
       st.z += st.dirZ * dash * dt
+      if (ringRef.current) ringRef.current.visible = false
       if (!st.hitDone) {
         const d2 = Math.hypot(px - st.x, pz - st.z)
         if (d2 < 2.1 && performance.now() > st.playerIframes) {
           st.hitDone = true
           st.playerIframes = performance.now() + 900
-          if (navigator.vibrate) navigator.vibrate(60)
-          playHurt()
-          damagePlayer(enemyStrikeDamage() * (st.boss ? 2 : 1))
+          const toB = d2 || 1
+          const facingDot = ((st.x - px) / toB) * game.hunterFacing.x + ((st.z - pz) / toB) * game.hunterFacing.z
+          if (performance.now() - game.parryAt < 450 && facingDot > 0.2) {
+            st.mode = 'stagger'
+            st.timer = 1.8
+            st.vulnerable = true
+            sprayEvents.push({ x: st.x, z: st.z, dirX: -st.dirX, dirZ: -st.dirZ, big: false })
+            hitStop(170)
+            shake(0.12)
+            playParrySuccess()
+            if (navigator.vibrate) navigator.vibrate([30, 40, 70])
+          } else {
+            if (navigator.vibrate) navigator.vibrate(60)
+            playHurt()
+            damagePlayer(enemyStrikeDamage() * (st.boss ? 2 : 1))
+          }
         }
       }
       if (st.timer <= 0) {
         st.mode = 'recover'
         st.timer = st.boss ? 1.1 : 0.9
         if (g) g.scale.y = g.scale.x
+      }
+    } else if (st.mode === 'stagger') {
+      st.timer -= dt
+      if (g) g.rotation.z = Math.sin(st.timer * 9) * 0.1
+      if (st.timer <= 0) {
+        st.vulnerable = false
+        if (g) g.rotation.z = 0
+        st.mode = 'recover'
+        st.timer = 0.6
       }
     } else if (st.mode === 'recover') {
       st.timer -= dt
@@ -223,7 +273,12 @@ function Beast({ spawn }) {
     g.position.y = Math.sin(t * 2 + spawn.phase) * 0.04
     g.rotation.y = st.rotY
     if (eyesRef.current) {
-      eyesRef.current.material.emissiveIntensity = (st.boss ? 6 : 2.8) + Math.sin(t * 5 + spawn.phase) * 1.2
+      let ei = (st.boss ? 6 : 2.8) + Math.sin(t * 5 + spawn.phase) * 1.2
+      if (st.mode === 'windup') ei += 5
+      eyesRef.current.material.emissiveIntensity = ei
+    }
+    if (ringRef.current) {
+      ringRef.current.visible = st.mode === 'windup'
     }
     if (bodyRef.current) {
       bodyRef.current.material.emissiveIntensity = st.boss ? 1.15 + Math.sin(t * 3 + spawn.phase) * 0.3 : 0.14
@@ -265,6 +320,10 @@ function Beast({ spawn }) {
         <mesh position={[0, 0.5, -0.18]} rotation={[0.5, 0, 0]} castShadow>
           <coneGeometry args={[0.3, 1.0, 7]} />
           <meshStandardMaterial color="#201b28" roughness={0.9} />
+        </mesh>
+        <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]} visible={false}>
+          <ringGeometry args={[0.95, 1.45, 24]} />
+          <meshBasicMaterial color="#ff2415" transparent opacity={0.5} depthWrite={false} fog={false} />
         </mesh>
       </group>
       <group ref={barWrap} position={[spawn.x, 2.35, spawn.z]} visible={false}>
@@ -391,6 +450,71 @@ function BloodStains() {
   )
 }
 
+function BloodSpray() {
+  const ref = useRef(null)
+  const parts = useRef(Array.from({ length: 90 }, () => ({
+    x: 0, y: -10, z: 0, vx: 0, vy: 0, vz: 0, life: 0, size: 0.05
+  })))
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+
+  useFrame((_, delta) => {
+    const raw = Math.min(delta, 0.05)
+    const dt = hitstopActive() ? raw * 0.1 : raw
+    const arr = parts.current
+    while (sprayEvents.length) {
+      const ev = sprayEvents.shift()
+      let spawned = 0
+      const want = ev.big ? 26 : 12
+      for (const p of arr) {
+        if (p.life > 0) continue
+        const a = Math.random() * Math.PI * 2
+        const sp = (ev.big ? 2.4 : 1.5) + Math.random() * 1.9
+        p.x = ev.x
+        p.z = ev.z
+        p.y = 1.0 + Math.random() * 0.7
+        p.vx = Math.cos(a) * sp + (ev.dirX || 0) * 2.2
+        p.vz = Math.sin(a) * sp + (ev.dirZ || 0) * 2.2
+        p.vy = 2 + Math.random() * 2.6
+        p.size = 0.05 + Math.random() * (ev.big ? 0.1 : 0.05)
+        p.life = 0.4 + Math.random() * 0.3
+        spawned++
+        if (spawned >= want) break
+      }
+    }
+    const mesh = ref.current
+    if (!mesh) return
+    for (let i = 0; i < arr.length; i++) {
+      const p = arr[i]
+      if (p.life > 0) {
+        p.life -= dt
+        p.vy -= 10 * dt
+        p.x += p.vx * dt
+        p.y += p.vy * dt
+        p.z += p.vz * dt
+        if (p.y < 0.03) {
+          p.y = 0.03
+          p.life = Math.min(p.life, 0.12)
+        }
+        dummy.position.set(p.x, p.y, p.z)
+        dummy.scale.setScalar(p.size * Math.max(0.25, Math.min(1, p.life * 3)))
+      } else {
+        dummy.position.set(0, -10, 0)
+        dummy.scale.setScalar(0.0001)
+      }
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh ref={ref} args={[null, null, 90]} frustumCulled={false}>
+      <sphereGeometry args={[1, 6, 6]} />
+      <meshBasicMaterial color="#7a0e08" transparent opacity={0.9} depthWrite={false} />
+    </instancedMesh>
+  )
+}
+
 export function Enemies() {
   const spawns = useMemo(() => {
     const rand = seededRandom(101)
@@ -420,6 +544,7 @@ export function Enemies() {
         <Beast key={i} spawn={s} />
       ))}
       <BloodStains />
+      <BloodSpray />
     </group>
   )
 }

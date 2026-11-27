@@ -1,10 +1,24 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { game } from '../game/store.js'
 
 export function TouchControls() {
   const baseRef = useRef(null)
   const knobRef = useRef(null)
   const activeId = useRef(null)
+
+  useEffect(() => {
+    const reset = () => {
+      activeId.current = null
+      game.input.joy.x = 0
+      game.input.joy.y = 0
+      if (knobRef.current) knobRef.current.style.transform = 'translate(0px, 0px)'
+    }
+    window.addEventListener('blur', reset)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) reset()
+    })
+    return () => window.removeEventListener('blur', reset)
+  }, [])
 
   const setJoy = (x, y) => {
     game.input.joy.x = x
@@ -35,7 +49,8 @@ export function TouchControls() {
     handleMove(e)
   }
 
-  const onPointerUp = () => {
+  const onPointerUp = (e) => {
+    if (activeId.current !== null && e.pointerId !== activeId.current) return
     activeId.current = null
     knobRef.current.style.transform = 'translate(0px, 0px)'
     setJoy(0, 0)
@@ -47,8 +62,10 @@ export function TouchControls() {
       style={{ width: size, height: size, fontSize }}
       onPointerDown={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         action()
       }}
+      onContextMenu={(e) => e.preventDefault()}
     >
       {label}
     </button>
@@ -60,20 +77,29 @@ export function TouchControls() {
         .tc-root { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
         @media (hover: hover) and (pointer: fine) { .tc-root { display: none; } }
         .tc-joy {
-          position: absolute; left: 22px; bottom: 64px; width: 118px; height: 118px;
+          position: absolute; left: 20px; bottom: 46px; width: 124px; height: 124px;
           border-radius: 50%; border: 1px solid rgba(150, 120, 70, 0.5);
           background: rgba(10, 8, 8, 0.4); pointer-events: auto; touch-action: none; }
         .tc-knob {
-          position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+          position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px;
           border-radius: 50%; background: rgba(190, 150, 80, 0.35);
-          border: 1px solid rgba(210, 170, 100, 0.6); }
-        .tc-actions { position: absolute; right: 18px; bottom: 58px; display: flex;
-          gap: 12px; align-items: flex-end; }
+          border: 1px solid rgba(210, 170, 100, 0.6); pointer-events: none; }
+        .tc-actions { position: absolute; right: 16px; bottom: 42px; display: grid;
+          grid-template-columns: 64px 64px; gap: 10px; justify-items: end; align-items: end; }
         .tc-btn {
-          pointer-events: auto; touch-action: none; border-radius: 50%;
+          pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent; border-radius: 50%;
           border: 1px solid rgba(170, 130, 70, 0.65); background: rgba(15, 10, 8, 0.55);
-          color: #d8c290; font-family: 'Cinzel', serif; letter-spacing: 1px; }
-        .tc-btn:active { background: rgba(90, 55, 25, 0.6); }
+          color: #d8c290; font-family: 'Cinzel', serif; letter-spacing: 1px;
+          transition: transform 0.05s; }
+        .tc-btn:active { background: rgba(120, 40, 20, 0.7); transform: scale(0.93); }
+        .tc-rotate { position: absolute; inset: 0; background: rgba(4, 3, 5, 0.92); z-index: 50;
+          display: none; flex-direction: column; align-items: center; justify-content: center;
+          color: #b89a5a; font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 16px;
+          text-align: center; gap: 14px; pointer-events: auto; }
+        .tc-rotate-icon { font-size: 44px; animation: tcspin 2.4s ease-in-out infinite; }
+        @keyframes tcspin { 0%, 20% { transform: rotate(0deg); } 60%, 100% { transform: rotate(90deg); } }
+        @media (orientation: portrait) and (pointer: coarse) { .tc-rotate { display: flex; } }
       `}</style>
 
       <div
@@ -85,6 +111,8 @@ export function TouchControls() {
         }}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onLostPointerCapture={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <div ref={knobRef} className="tc-knob" />
       </div>
@@ -92,13 +120,24 @@ export function TouchControls() {
       <div className="tc-actions">
         {btn('БЕГ', () => {
           game.input.run = !game.input.run
-        }, 56, 11)}
+        }, 58, 10)}
+        {btn('ПАРИР', () => {
+          game.input.parryReq++
+        }, 62, 10)}
         {btn('ПЕРЕКАТ', () => {
           game.input.dodgeReq++
-        }, 62, 9)}
+        }, 68, 9)}
         {btn('АТАКА', () => {
           game.input.attackReq++
-        }, 76, 12)}
+        }, 82, 12)}
+      </div>
+
+      <div className="tc-rotate">
+        <div className="tc-rotate-icon">📱</div>
+        <div>ПОВЕРНИ ТЕЛЕФОН</div>
+        <div style={{ fontSize: 11, letterSpacing: 2, color: '#8a7d64' }}>
+          Игра создана для горизонтального экрана
+        </div>
       </div>
     </div>
   )

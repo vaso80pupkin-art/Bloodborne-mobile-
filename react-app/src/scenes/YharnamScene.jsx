@@ -93,7 +93,7 @@ function FollowCam() {
     let sy = 0
     const shakeAge = now - game.shakeAt
     if (shakeAge < 350) {
-      const amp = 0.14 * (1 - shakeAge / 350)
+      const amp = (game.shakeAmp || 0.14) * (1 - shakeAge / 350)
       sx = (Math.random() - 0.5) * amp
       sy = (Math.random() - 0.5) * amp
     }
@@ -120,12 +120,20 @@ function detectSoftwareRenderer() {
 
 export function YharnamScene() {
   const softwareRenderer = useMemo(detectSoftwareRenderer, [])
+  const lowEnd = useMemo(() => {
+    if (softwareRenderer) return true
+    try {
+      return window.matchMedia('(pointer: coarse)').matches && Math.min(window.screen.width, window.screen.height) < 900
+    } catch {
+      return false
+    }
+  }, [])
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
+      dpr={[1, lowEnd ? 1.3 : 1.75]}
       camera={{ position: [0, 3.2, 11], fov: 55, near: 0.1, far: 220 }}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: !lowEnd, powerPreference: 'high-performance' }}
     >
       <color attach="background" args={['#07070d']} />
       <fogExp2 attach="fog" args={['#0a0a12', 0.024]} />
@@ -147,7 +155,7 @@ export function YharnamScene() {
         <Enemies />
         <StreetLamp position={[-7, 0, -6]} castShadow={false} />
         <StreetLamp position={[4, 0, -14]} castShadow={false} />
-        {!softwareRenderer && <Puddles />}
+        {!lowEnd && <Puddles />}
         <GroundFog />
         <AshParticles />
         <Rain />
@@ -165,7 +173,7 @@ export function YharnamScene() {
               <HueSaturation saturation={-0.25} hue={0} />
               <BrightnessContrast brightness={-0.04} contrast={0.18} />
               <Vignette eskil={false} offset={0.22} darkness={0.85} />
-              <Noise opacity={0.03} />
+              {!lowEnd && <Noise opacity={0.03} />}
             </>
           )}
         </EffectComposer>

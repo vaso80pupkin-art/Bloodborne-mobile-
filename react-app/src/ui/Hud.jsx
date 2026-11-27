@@ -141,7 +141,7 @@ export function Hud() {
         </div>
       </div>
 
-      <div className="hud-hint">WASD / джойстик — движение · J / F — атака · Space — перекат · R — бег</div>
+      <div className="hud-hint">WASD / джойстик — движение · J / F — атака · Space — перекат · Q — парирование · R — бег</div>
 
       {flashOn && <div className="hud-flash" key={game.flashAt} />}
       {bannerOn && game.banner && (

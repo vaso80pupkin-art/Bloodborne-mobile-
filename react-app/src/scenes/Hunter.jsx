@@ -2,9 +2,9 @@ import React, { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { game, emit } from '../game/store.js'
+import { game, emit, hitstopActive } from '../game/store.js'
 import { playerAttackHit } from './Enemies.jsx'
-import { playStep, playDodge, playSwing, playDied, switchMusic } from '../game/audio.js'
+import { playStep, playDodge, playSwing, playDied, switchMusic, playParry } from '../game/audio.js'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/hunter_rigged.glb`
 const IDLE = 'Idle'
@@ -70,7 +70,8 @@ export function Hunter() {
   }, [actions])
 
   useFrame(({ clock }, delta) => {
-    const dt = Math.min(delta, 0.05)
+    const raw = Math.min(delta, 0.05)
+    const dt = hitstopActive() ? raw * 0.1 : raw
     const now = performance.now()
     const t = clock.getElapsedTime()
     const input = game.input
@@ -130,6 +131,19 @@ export function Hunter() {
       }
     } else if (input.dodgeReq > 0) {
       input.dodgeReq = 0
+    }
+
+    if (input.parryReq > 0 && !dodgeRef.current.active && now >= busyUntilRef.current && !game.dead) {
+      input.parryReq = 0
+      if (game.stamina >= 15) {
+        game.stamina -= 15
+        game.parryAt = now
+        playParry()
+        busyUntilRef.current = now + 350
+        emit()
+      }
+    } else if (input.parryReq > 0) {
+      input.parryReq = 0
     }
 
     let mx = 0

@@ -113,6 +113,17 @@ export function playDodge() {
   playNoise({ duration: 0.25, freq: 500, freqEnd: 1200, q: 1.2, gain: 0.18 })
 }
 
+export function playParry() {
+  playNoise({ duration: 0.12, type: 'highpass', freq: 2500, gain: 0.12 })
+}
+
+export function playParrySuccess() {
+  playTone({ freq: 1180, freqEnd: 880, duration: 0.18, type: 'square', gain: 0.14 })
+  playTone({ freq: 1760, duration: 0.1, type: 'sine', gain: 0.1 })
+  playNoise({ duration: 0.2, type: 'highpass', freq: 3000, gain: 0.2 })
+  playTone({ freq: 70, freqEnd: 40, duration: 0.25, gain: 0.35, delay: 0.02 })
+}
+
 export function playGrowl() {
   playTone({ freq: 55, freqEnd: 38, duration: 0.5, type: 'sawtooth', gain: 0.16 })
   playNoise({ duration: 0.45, type: 'lowpass', freq: 200, gain: 0.14 })
