@@ -24,6 +24,6 @@ npm run preview  # локальный просмотр сборки
 ## План
 
 1. Атмосфера: туман, ночное небо, брусчатка, мерцающие фонари ✅ (стартовая сцена)
-2. Пост-обработка: Bloom, цветокоррекция, Vignette
+2. Пост-обработка: Bloom, цветокоррекция, Vignette ✅ (@react-three/postprocessing)
 3. Персонаж-охотник: .glb из Blender, `useAnimations` (Idle / Run / Dodge / Attack)
 4. Боевая система и HUD на React

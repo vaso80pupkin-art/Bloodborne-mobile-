@@ -1,6 +1,13 @@
 import React, { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  HueSaturation,
+  BrightnessContrast
+} from '@react-three/postprocessing'
 import { CobblestoneGround } from './CobblestoneGround.jsx'
 import { StreetLamp } from './StreetLamp.jsx'
 import { AshParticles } from './AshParticles.jsx'
@@ -57,6 +64,18 @@ export function YharnamScene() {
         <StreetLamp position={[2.5, 0, 2]} />
         <StreetLamp position={[-7, 0, -6]} />
         <AshParticles />
+
+        <EffectComposer multisampling={0}>
+          <Bloom
+            intensity={0.9}
+            luminanceThreshold={0.55}
+            luminanceSmoothing={0.25}
+            mipmapBlur
+          />
+          <HueSaturation saturation={-0.25} hue={0} />
+          <BrightnessContrast brightness={-0.04} contrast={0.18} />
+          <Vignette eskil={false} offset={0.22} darkness={0.85} />
+        </EffectComposer>
       </Suspense>
     </Canvas>
   )
