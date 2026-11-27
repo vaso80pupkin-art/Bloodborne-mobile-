@@ -1,3 +1,5 @@
+import { playEchoPickup } from './audio.js'
+
 const listeners = new Set()
 
 const saved = (() => {
@@ -25,6 +27,8 @@ export const game = {
   parryAt: -9999,
   resetNonce: 0,
   banner: null,
+  checkpoint: { x: 1.35, z: 3.1 },
+  echo: null,
   upgrades: saved.upgrades || { hp: 0, dmg: 0, stam: 0 },
   hunterPos: { x: 1.35, z: 3.1 },
   hunterFacing: { x: 0, z: -1 },
@@ -103,7 +107,8 @@ export function stageCleared() {
   game.hp = game.maxHp
   const zone = stageZone()
   game.teleportReq = { x: zone.x, z: zone.z }
-  showBanner(`ЭТАП ${game.stage} · ${zone.name}`, 'Охота продолжается. Звери голоднее.')
+  game.checkpoint = { x: zone.x, z: zone.z }
+  showBanner(`ЭТАП ${game.stage} · ${zone.name}`, 'Фонарь новой зоны зажжён. Охота продолжается.')
   saveGame()
   emit()
 }
@@ -131,13 +136,32 @@ export function damagePlayer(amount) {
   game.hp = Math.max(0, game.hp - amount)
   game.flashAt = performance.now()
   shake(0.16)
-  if (game.hp <= 0) game.dead = true
+  if (game.hp <= 0) {
+    game.dead = true
+    if (game.blood > 0) {
+      game.echo = { x: game.hunterPos.x, z: game.hunterPos.z, amount: game.blood }
+      game.blood = 0
+    }
+    saveGame()
+  }
+  emit()
+}
+
+export function collectEcho() {
+  if (!game.echo) return
+  const amount = game.echo.amount
+  game.echo = null
+  game.blood += amount
+  showBanner('ЭХО КРОВИ ВОЗВРАЩЕНО', `+${amount} крови. Смерть не забрала добычу.`)
+  playEchoPickup()
+  saveGame()
   emit()
 }
 
 export function registerKill(isBoss) {
   game.kills += 1
   game.stageKills += 1
+  game.blood += isBoss ? 0 : 12 + game.stage * 6
   if (isBoss) {
     game.blood += 80 + game.stage * 15
     showBanner('ЗВЕРЬ ПОВЕРЖЕН', 'Кровь рекой стекает в твои руки.')
@@ -150,6 +174,7 @@ export function reviveAtLamp() {
   game.hp = game.maxHp
   game.stamina = game.maxStamina
   game.dead = false
+  game.teleportReq = { x: game.checkpoint.x, z: game.checkpoint.z }
   game.resetNonce++
   emit()
 }

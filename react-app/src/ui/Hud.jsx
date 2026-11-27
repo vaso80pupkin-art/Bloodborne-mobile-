@@ -61,6 +61,9 @@ export function Hud() {
         .hud-blood { font-size: clamp(13px, 3vw, 18px); color: #d8b25a; margin-top: 4px;
           text-shadow: 0 0 12px rgba(216,140,40,0.5); }
         .hud-stage { font-size: clamp(9px, 2.2vw, 12px); letter-spacing: 2px; color: #a89878; margin-top: 3px; }
+        .hud-echo { font-size: clamp(9px, 2.2vw, 12px); letter-spacing: 2px; color: #ff5a48; margin-top: 4px;
+          text-shadow: 0 0 10px rgba(255,40,20,0.6); animation: echoPulse 1.4s ease-in-out infinite; }
+        @keyframes echoPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
         .hud-btn-row { margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end; pointer-events: auto; }
         .hud-btn { cursor: pointer; background: rgba(15, 11, 8, 0.75); border: 1px solid #5a4830;
           color: #d0b87a; font-family: 'Cinzel', serif; font-size: clamp(10px, 2.4vw, 13px);
@@ -126,6 +129,7 @@ export function Hud() {
         <div className="hud-title">Yharnam · Ночной кошмар охотника</div>
         <div className="hud-blood">🩸 {game.blood} &nbsp;·&nbsp; ☠ {game.kills}</div>
         <div className="hud-stage">ЭТАП {game.stage} · ЗВЕРЕЙ ОСТАЛОСЬ {left}</div>
+        {game.echo && <div className="hud-echo">💀 ЭХО КРОВИ ОСТАЛОСЬ НА МЕСТЕ ГИБЕЛИ</div>}
         <div className="hud-btn-row">
           <button
             className="hud-btn"
@@ -181,7 +185,7 @@ export function Hud() {
       {game.dead && (
         <div className="hud-died">
           <div className="died-text">YOU DIED</div>
-          <div className="died-sub">Смерть — не конец. Охотник всегда возвращается.</div>
+          <div className="died-sub">{game.echo ? 'Твоя кровь осталась на месте гибели. Вернись и забери её.' : 'Смерть — не конец. Охотник всегда возвращается.'}</div>
           <button
             className="died-btn"
             onClick={() => {

@@ -524,6 +524,51 @@ function BloodSpray() {
   )
 }
 
+function BloodEcho() {
+  const orbRef = useRef(null)
+  const lightRef = useRef(null)
+  const groupRef = useRef(null)
+
+  useFrame(({ clock }, delta) => {
+    const g = groupRef.current
+    if (!g) return
+    const echo = game.echo
+    const raw = Math.min(delta, 0.05)
+    const dt = hitstopActive() ? raw * 0.1 : raw
+    if (echo) {
+      g.visible = true
+      g.position.set(echo.x, 0, echo.z)
+      const t = clock.getElapsedTime()
+      const bob = Math.sin(t * 2.4) * 0.08
+      const orb = orbRef.current
+      if (orb) {
+        orb.position.y = 0.62 + bob
+        orb.rotation.y += dt * 1.4
+        const s = 1 + Math.sin(t * 3.1) * 0.12
+        orb.scale.setScalar(s)
+      }
+      const l = lightRef.current
+      if (l) l.intensity = 5 + Math.sin(t * 3.1) * 2
+    } else {
+      g.visible = false
+    }
+  })
+
+  return (
+    <group ref={groupRef} visible={false}>
+      <mesh ref={orbRef}>
+        <icosahedronGeometry args={[0.17, 1]} />
+        <meshBasicMaterial color="#ff2a18" transparent opacity={0.85} />
+      </mesh>
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.3, 0.42, 24]} />
+        <meshBasicMaterial color="#8a0e08" transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      <pointLight ref={lightRef} color="#ff2010" intensity={5} distance={5} decay={2} position={[0, 0.7, 0]} />
+    </group>
+  )
+}
+
 export function Enemies() {
   const spawns = useMemo(() => {
     const rand = seededRandom(101)
@@ -554,6 +599,7 @@ export function Enemies() {
       ))}
       <BloodStains />
       <BloodSpray />
+      <BloodEcho />
     </group>
   )
 }

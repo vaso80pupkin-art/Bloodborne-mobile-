@@ -135,6 +135,13 @@ export function playLevelUp() {
   playTone({ freq: 659, duration: 0.2, type: 'triangle', gain: 0.22, delay: 0.2 })
 }
 
+export function playEchoPickup() {
+  playTone({ freq: 294, duration: 0.16, type: 'triangle', gain: 0.18 })
+  playTone({ freq: 440, duration: 0.16, type: 'triangle', gain: 0.18, delay: 0.12 })
+  playTone({ freq: 587, duration: 0.28, type: 'triangle', gain: 0.2, delay: 0.24 })
+  playTone({ freq: 55, freqEnd: 40, duration: 0.3, gain: 0.22, delay: 0.05 })
+}
+
 export function playDied() {
   playTone({ freq: 220, freqEnd: 55, duration: 1.2, type: 'sine', gain: 0.35 })
   playNoise({ duration: 1.4, type: 'lowpass', freq: 400, freqEnd: 60, gain: 0.2 })

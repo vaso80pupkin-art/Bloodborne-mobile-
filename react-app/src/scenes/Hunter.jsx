@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { game, emit, hitstopActive, stageZone } from '../game/store.js'
+import { game, emit, hitstopActive, collectEcho } from '../game/store.js'
 import { playerAttackHit } from './Enemies.jsx'
 import { playStep, playDodge, playSwing, playDied, switchMusic, playParry } from '../game/audio.js'
 
@@ -84,7 +84,7 @@ export function Hunter() {
 
     if (lastNonceRef.current !== game.resetNonce) {
       lastNonceRef.current = game.resetNonce
-      const zone = stageZone()
+      const zone = game.checkpoint || { x: 1.35, z: 3.1 }
       posRef.current = { x: zone.x, z: zone.z }
       facingRef.current = { x: 0, z: -1 }
       dodgeRef.current.active = false
@@ -105,6 +105,12 @@ export function Hunter() {
       switchMusic(false)
     }
     if (game.dead) return
+
+    if (game.echo) {
+      const ex = posRef.current.x - game.echo.x
+      const ez = posRef.current.z - game.echo.z
+      if (ex * ex + ez * ez < 2.6) collectEcho()
+    }
 
     if (input.attackReq > 0 && now >= busyUntilRef.current && !dodgeRef.current.active) {
       input.attackReq = 0
