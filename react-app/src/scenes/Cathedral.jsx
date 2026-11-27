@@ -21,7 +21,7 @@ function Spire({ position, height = 26, radius = 2.2 }) {
 
 export function Cathedral() {
   return (
-    <group position={[0, 0, -72]} rotation={[0, 0.08, 0]}>
+    <group position={[0, 0, -40]} rotation={[0, 0.08, 0]}>
       <mesh position={[0, 9, 0]} castShadow>
         <boxGeometry args={[26, 18, 14]} />
         <meshStandardMaterial color="#0e0d12" roughness={0.95} />
@@ -36,8 +36,8 @@ export function Cathedral() {
       <Spire position={[0, 0, -4]} height={30} radius={2.4} />
 
       <mesh position={[0, 12, 7.05]}>
-        <circleGeometry args={[2.6, 24]} />
-        <meshStandardMaterial color="#241608" emissive="#d08020" emissiveIntensity={1.1} />
+        <circleGeometry args={[3.2, 24]} />
+        <meshStandardMaterial color="#241608" emissive="#d08020" emissiveIntensity={2.6} fog={false} />
       </mesh>
       {[-4.5, 4.5].map((x) => (
         <mesh key={x} position={[x, 6, 7.05]}>

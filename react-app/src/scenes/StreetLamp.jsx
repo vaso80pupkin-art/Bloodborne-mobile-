@@ -1,28 +1,30 @@
-import React, { useRef } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 const LAMP_HEIGHT = 4.2
 
-function LanternGlass() {
-  return (
-    <mesh>
-      <boxGeometry args={[0.42, 0.55, 0.42]} />
-      <meshStandardMaterial
-        color="#ffb45a"
-        emissive="#ff9a2a"
-        emissiveIntensity={2.4}
-        roughness={0.35}
-        metalness={0}
-      />
-    </mesh>
-  )
+function createGlowTexture() {
+  const size = 256
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  g.addColorStop(0, 'rgba(255, 170, 80, 0.5)')
+  g.addColorStop(0.5, 'rgba(200, 120, 50, 0.18)')
+  g.addColorStop(1, 'rgba(160, 90, 40, 0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, size, size)
+  return new THREE.CanvasTexture(canvas)
 }
 
 export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
   const lightRef = useRef(null)
   const glassRef = useRef(null)
   const flickerSeed = useRef(Math.random() * 100)
+  const glowTexture = useMemo(() => createGlowTexture(), [])
+  const glowRef = useRef(null)
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime() + flickerSeed.current
@@ -36,6 +38,9 @@ export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
     }
     if (glassRef.current) {
       glassRef.current.material.emissiveIntensity = 2.4 * Math.max(0.55, flicker)
+    }
+    if (glowRef.current) {
+      glowRef.current.material.opacity = 0.24 * Math.max(0.55, flicker)
     }
   })
 
@@ -57,9 +62,16 @@ export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
           <meshStandardMaterial color="#141416" roughness={0.6} metalness={0.7} />
         </mesh>
 
-        <group ref={glassRef} position={[0, -0.32, 0]}>
-          <LanternGlass />
-        </group>
+        <mesh ref={glassRef} position={[0, -0.32, 0]}>
+          <boxGeometry args={[0.42, 0.55, 0.42]} />
+          <meshStandardMaterial
+            color="#ffb45a"
+            emissive="#ff9a2a"
+            emissiveIntensity={2.4}
+            roughness={0.35}
+            metalness={0}
+          />
+        </mesh>
         <mesh position={[0, -0.62, 0]} castShadow>
           <cylinderGeometry args={[0.05, 0.12, 0.12, 6]} />
           <meshStandardMaterial color="#141416" roughness={0.6} metalness={0.7} />
@@ -80,6 +92,18 @@ export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
           side={THREE.DoubleSide}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <planeGeometry args={[4.4, 4.4]} />
+        <meshBasicMaterial
+          map={glowTexture}
+          color="#ff9a3a"
+          transparent
+          opacity={0.24}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
         />
       </mesh>
 

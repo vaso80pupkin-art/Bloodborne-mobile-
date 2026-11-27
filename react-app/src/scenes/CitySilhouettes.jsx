@@ -16,7 +16,7 @@ export function CitySilhouettes() {
     for (let i = 0; i < 26; i++) {
       const side = rand() > 0.5 ? 1 : -1
       const z = -14 - rand() * 46
-      const x = side * (6 + rand() * 30)
+      const x = side * (13 + rand() * 23)
       const w = 4 + rand() * 6
       const d = 4 + rand() * 6
       const h = 7 + rand() * 16
@@ -42,7 +42,7 @@ export function CitySilhouettes() {
           )}
           <mesh position={[0, b.h * 0.75, b.d / 2 + 0.02]}>
             <planeGeometry args={[0.55, 0.8]} />
-            <meshStandardMaterial color="#2a1c10" emissive="#c07820" emissiveIntensity={0.7} />
+            <meshStandardMaterial color="#2a1c10" emissive="#c07820" emissiveIntensity={1.0} />
           </mesh>
         </group>
       ))}

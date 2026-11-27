@@ -23,7 +23,7 @@ function createCobblestoneTexture() {
       const w = cell * 0.82
       const h = cell * 0.72
 
-      const shade = 18 + Math.floor(Math.random() * 22)
+      const shade = 34 + Math.floor(Math.random() * 26)
       ctx.fillStyle = `rgb(${shade + 8}, ${shade + 4}, ${shade})`
       ctx.beginPath()
       const r = 5
@@ -36,7 +36,7 @@ function createCobblestoneTexture() {
       ctx.lineWidth = 2
       ctx.stroke()
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.045)'
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.09)'
       ctx.beginPath()
       ctx.roundRect(cx - w / 2 + 3, cy - h / 2 + 3, w * 0.5, h * 0.35, 3)
       ctx.fill()
@@ -51,9 +51,9 @@ function createCobblestoneTexture() {
   const texture = new THREE.CanvasTexture(canvas)
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(7, 7)
+  texture.repeat.set(26, 26)
   texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = 4
+  texture.anisotropy = 8
   return texture
 }
 
@@ -63,7 +63,7 @@ export function CobblestoneGround() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
       <planeGeometry args={[160, 160]} />
-      <meshStandardMaterial map={texture} roughness={0.92} metalness={0.05} color="#9a9188" />
+      <meshStandardMaterial map={texture} roughness={0.92} metalness={0.05} color="#d8d0c6" />
     </mesh>
   )
 }
