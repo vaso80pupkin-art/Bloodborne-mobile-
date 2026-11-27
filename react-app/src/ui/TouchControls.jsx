@@ -56,10 +56,9 @@ export function TouchControls() {
     setJoy(0, 0)
   }
 
-  const btn = (label, action, size, fontSize) => (
+  const btn = (label, action, cls) => (
     <button
-      className="tc-btn"
-      style={{ width: size, height: size, fontSize }}
+      className={`tc-btn ${cls}`}
       onPointerDown={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -77,22 +76,30 @@ export function TouchControls() {
         .tc-root { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
         @media (hover: hover) and (pointer: fine) { .tc-root { display: none; } }
         .tc-joy {
-          position: absolute; left: 20px; bottom: 46px; width: 124px; height: 124px;
-          border-radius: 50%; border: 1px solid rgba(150, 120, 70, 0.5);
-          background: rgba(10, 8, 8, 0.4); pointer-events: auto; touch-action: none; }
+          position: absolute; left: calc(22px + env(safe-area-inset-left)); bottom: calc(34px + env(safe-area-inset-bottom));
+          width: 132px; height: 132px;
+          border-radius: 50%; border: 1px solid rgba(150, 120, 70, 0.55);
+          background: radial-gradient(circle, rgba(30, 22, 14, 0.35) 0%, rgba(10, 8, 8, 0.5) 100%);
+          pointer-events: auto; touch-action: none; }
         .tc-knob {
-          position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px;
-          border-radius: 50%; background: rgba(190, 150, 80, 0.35);
-          border: 1px solid rgba(210, 170, 100, 0.6); pointer-events: none; }
-        .tc-actions { position: absolute; right: 16px; bottom: 42px; display: grid;
-          grid-template-columns: 64px 64px; gap: 10px; justify-items: end; align-items: end; }
+          position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+          border-radius: 50%; background: rgba(190, 150, 80, 0.4);
+          border: 1px solid rgba(220, 180, 110, 0.7); pointer-events: none;
+          box-shadow: 0 0 12px rgba(200, 150, 70, 0.35); }
         .tc-btn {
-          pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none;
+          position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none;
           -webkit-tap-highlight-color: transparent; border-radius: 50%;
-          border: 1px solid rgba(170, 130, 70, 0.65); background: rgba(15, 10, 8, 0.55);
-          color: #d8c290; font-family: 'Cinzel', serif; letter-spacing: 1px;
-          transition: transform 0.05s; }
-        .tc-btn:active { background: rgba(120, 40, 20, 0.7); transform: scale(0.93); }
+          border: 1px solid rgba(180, 140, 75, 0.7);
+          background: radial-gradient(circle, rgba(40, 28, 16, 0.62) 0%, rgba(12, 8, 7, 0.72) 100%);
+          color: #dcc79a; font-family: 'Cinzel', serif; letter-spacing: 1px;
+          transition: transform 0.05s; display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
+        .tc-btn:active { background: radial-gradient(circle, rgba(150, 45, 22, 0.75) 0%, rgba(60, 16, 8, 0.8) 100%);
+          transform: scale(0.92); border-color: rgba(255, 160, 80, 0.8); }
+        .tc-attack { right: calc(18px + env(safe-area-inset-right)); bottom: calc(30px + env(safe-area-inset-bottom)); width: 86px; height: 86px; font-size: 13px; }
+        .tc-dodge { right: calc(112px + env(safe-area-inset-right)); bottom: calc(44px + env(safe-area-inset-bottom)); width: 64px; height: 64px; font-size: 10px; }
+        .tc-parry { right: calc(64px + env(safe-area-inset-right)); bottom: calc(128px + env(safe-area-inset-bottom)); width: 64px; height: 64px; font-size: 10px; }
+        .tc-run { right: calc(158px + env(safe-area-inset-right)); bottom: calc(122px + env(safe-area-inset-bottom)); width: 54px; height: 54px; font-size: 9px; }
         .tc-rotate { position: absolute; inset: 0; background: rgba(4, 3, 5, 0.92); z-index: 50;
           display: none; flex-direction: column; align-items: center; justify-content: center;
           color: #b89a5a; font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 16px;
@@ -117,20 +124,18 @@ export function TouchControls() {
         <div ref={knobRef} className="tc-knob" />
       </div>
 
-      <div className="tc-actions">
-        {btn('БЕГ', () => {
-          game.input.run = !game.input.run
-        }, 58, 10)}
-        {btn('ПАРИР', () => {
-          game.input.parryReq++
-        }, 62, 10)}
-        {btn('ПЕРЕКАТ', () => {
-          game.input.dodgeReq++
-        }, 68, 9)}
-        {btn('АТАКА', () => {
-          game.input.attackReq++
-        }, 82, 12)}
-      </div>
+      {btn('БЕГ', () => {
+        game.input.run = !game.input.run
+      }, 'tc-run')}
+      {btn('ПАРИР', () => {
+        game.input.parryReq++
+      }, 'tc-parry')}
+      {btn('ПЕРЕКАТ', () => {
+        game.input.dodgeReq++
+      }, 'tc-dodge')}
+      {btn('АТАКА', () => {
+        game.input.attackReq++
+      }, 'tc-attack')}
 
       <div className="tc-rotate">
         <div className="tc-rotate-icon">📱</div>

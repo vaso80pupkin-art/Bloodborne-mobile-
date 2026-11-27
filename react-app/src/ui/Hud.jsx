@@ -7,7 +7,7 @@ import {
   upgradeCost,
   buyUpgrade
 } from '../game/store.js'
-import { toggleMute, playLevelUp } from '../game/audio.js'
+import { toggleMute, playLevelUp, startAudio } from '../game/audio.js'
 
 const UPGRADE_LABELS = {
   hp: { name: 'ЗДОРОВЬЕ', desc: '+22 к максимуму и лечение' },
@@ -19,6 +19,8 @@ export function Hud() {
   const [, force] = useReducer((c) => c + 1, 0)
   const [shopOpen, setShopOpen] = useState(false)
   const [muted, setMuted] = useState(false)
+  const [started, setStarted] = useState(false)
+  const isTouch = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches
   useEffect(() => subscribe(force), [])
   useEffect(() => {
     const id = setInterval(() => {
@@ -40,6 +42,26 @@ export function Hud() {
     if (buyUpgrade(kind)) playLevelUp()
   }
 
+  const startHunt = () => {
+    setStarted(true)
+    startAudio()
+    if (isTouch) {
+      const el = document.documentElement
+      if (el.requestFullscreen) el.requestFullscreen().catch(() => {})
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {})
+      }
+    }
+  }
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {})
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {})
+    }
+  }
+
   return (
     <div className="hud-root">
       <style>{`
@@ -48,14 +70,19 @@ export function Hud() {
           font-family: 'Cinzel', serif; color: #cfc4b0;
           user-select: none; -webkit-user-select: none;
         }
-        .hud-bars { position: absolute; top: 16px; left: 16px; width: min(300px, 42vw); }
+        .hud-bars { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); width: min(300px, 42vw); }
         .hud-bar { height: 13px; border: 1px solid #4a3c28; background: rgba(8, 6, 6, 0.72);
           margin-bottom: 6px; box-shadow: 0 0 8px rgba(0,0,0,0.8); overflow: hidden; }
         .hud-bar-fill { height: 100%; transition: width 0.18s ease-out; }
         .hp-fill { background: linear-gradient(90deg, #5e0d0d, #a11a12 70%, #c93a24); }
         .st-fill { background: linear-gradient(90deg, #3d4a12, #6f8a1e 70%, #93b32c); }
         .hud-meter { font-size: 9px; letter-spacing: 2px; color: #8a7d64; margin-bottom: 3px; }
-        .hud-right { position: absolute; top: 14px; right: 14px; text-align: right; }
+        .hud-right { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); text-align: right; }
+        @media (pointer: coarse) {
+          .hud-title { display: none; }
+          .hud-hint { display: none; }
+          .hud-btn { padding: 5px 9px; font-size: 10px; }
+        }
         .hud-title { font-size: clamp(9px, 2.2vw, 13px); letter-spacing: 3px; color: #9a8c72;
           text-shadow: 0 0 10px #000; }
         .hud-blood { font-size: clamp(13px, 3vw, 18px); color: #d8b25a; margin-top: 4px;
@@ -72,6 +99,17 @@ export function Hud() {
         .hud-hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
           font-size: clamp(8px, 1.8vw, 11px); letter-spacing: 2px; color: #6f6552; white-space: nowrap;
           text-shadow: 0 1px 4px #000; }
+        .hud-start { position: absolute; inset: 0; background: radial-gradient(ellipse at center,
+          rgba(10, 6, 4, 0.55) 0%, rgba(4, 2, 3, 0.9) 100%); display: flex; flex-direction: column;
+          align-items: center; justify-content: center; pointer-events: auto; z-index: 40; }
+        .start-title { font-size: clamp(34px, 9vw, 78px); letter-spacing: 16px; color: #b89a5a;
+          text-shadow: 0 0 34px rgba(140, 70, 10, 0.9), 0 0 80px rgba(120, 10, 5, 0.5); }
+        .start-sub { font-size: clamp(10px, 2.4vw, 14px); letter-spacing: 5px; color: #8a7d64; margin: 10px 0 44px; }
+        .start-btn { cursor: pointer; background: rgba(20, 14, 8, 0.85); border: 1px solid #6a5530;
+          color: #d8b25a; font-family: 'Cinzel', serif; font-size: clamp(14px, 3.2vw, 19px);
+          letter-spacing: 5px; padding: 16px 44px; box-shadow: 0 0 24px rgba(0,0,0,0.8); }
+        .start-btn:active { background: rgba(70, 45, 18, 0.95); }
+        .start-note { font-size: clamp(8px, 2vw, 11px); letter-spacing: 2px; color: #6f6552; margin-top: 18px; }
         .hud-flash { position: absolute; inset: 0; background: radial-gradient(ellipse at center,
           rgba(120, 10, 5, 0) 40%, rgba(120, 10, 5, 0.55) 100%);
           animation: hudflash 0.5s ease-out forwards; }
@@ -142,10 +180,20 @@ export function Hud() {
           <button className="hud-btn" onClick={() => setShopOpen(true)}>
             ⬆ УЛУЧШЕНИЯ
           </button>
+          <button className="hud-btn" onClick={toggleFullscreen}>⛶</button>
         </div>
       </div>
 
-      <div className="hud-hint">WASD / джойстик — движение · J / F — атака · Space — перекат · Q — парирование · R — бег</div>
+      {!isTouch && <div className="hud-hint">WASD / стрелки — движение · J / F — атака · Space — перекат · Q — парирование · R — бег</div>}
+
+      {!started && (
+        <div className="hud-start">
+          <div className="start-title">ЯРНАМ</div>
+          <div className="start-sub">НОЧНОЙ КОШМАР ОХОТНИКА</div>
+          <button className="start-btn" onClick={startHunt}>НАЧАТЬ ОХОТУ</button>
+          <div className="start-note">{isTouch ? 'Игра откроется на весь экран · поверни телефон горизонтально' : 'Лучше играть в наушниках'}</div>
+        </div>
+      )}
 
       {flashOn && <div className="hud-flash" key={game.flashAt} />}
       {bannerOn && game.banner && (
