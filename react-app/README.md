@@ -29,3 +29,7 @@ npm run preview  # локальный просмотр сборки
    - Скелет и анимации сгенерированы Blender-скриптом: `tools/blender/rig_hunter.py` (Blender 4.x+, headless bpy)
    - Исходник `hunter_light.glb` — meshopt: для Blender его распаковывает `tools/blender/decompress_glb.mjs` (Node, `npm i meshoptimizer`)
 4. Боевая система и HUD на React
+
+## Онлайн-версия
+
+Новая React-версия автоматически публикуется здесь: https://vaso80pupkin-art.github.io/Bloodborne-mobile-
