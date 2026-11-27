@@ -18,6 +18,8 @@ import { GroundFog } from './GroundFog.jsx'
 import { Cathedral } from './Cathedral.jsx'
 import { Graveyard } from './Graveyard.jsx'
 import { Hunter } from './Hunter.jsx'
+import { Enemies } from './Enemies.jsx'
+import { game } from '../game/store.js'
 import { Rain } from './Rain.jsx'
 import { Puddles } from './Puddles.jsx'
 import { Crows } from './Crows.jsx'
@@ -80,12 +82,15 @@ function Moonlight() {
   )
 }
 
-function CameraDrift() {
-  useFrame(({ clock, camera }) => {
-    const t = clock.getElapsedTime()
-    camera.position.y = 3.2 + Math.sin(t * 0.4) * 0.05
-    camera.position.x = Math.sin(t * 0.21) * 0.4
-    camera.lookAt(0, 2.4, -8)
+function FollowCam() {
+  useFrame(({ camera }, delta) => {
+    const dt = Math.min(delta, 0.05)
+    const k = 1 - Math.pow(0.002, dt)
+    const p = game.hunterPos
+    camera.position.x += (p.x - camera.position.x) * k
+    camera.position.z += (p.z + 7.5 - camera.position.z) * k
+    camera.position.y += (3.4 - camera.position.y) * k
+    camera.lookAt(p.x, 1.9, p.z - 7)
   })
   return null
 }
@@ -128,14 +133,15 @@ export function YharnamScene() {
         <IronFence />
         <Graveyard />
         <StreetLamp position={[2.5, 0, 2]} />
-        <Hunter position={[1.35, 0, 3.1]} rotationY={Math.PI / 2} />
+        <Hunter />
+        <Enemies />
         <StreetLamp position={[-7, 0, -6]} castShadow={false} />
         <StreetLamp position={[4, 0, -14]} castShadow={false} />
         {!softwareRenderer && <Puddles />}
         <GroundFog />
         <AshParticles />
         <Rain />
-        <CameraDrift />
+        <FollowCam />
 
         <EffectComposer multisampling={0}>
           <Bloom
