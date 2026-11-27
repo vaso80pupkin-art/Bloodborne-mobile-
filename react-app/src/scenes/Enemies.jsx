@@ -13,6 +13,7 @@ import {
   enemyStrikeDamage,
   showBanner,
   stageCleared,
+  stageZone,
   hitStop,
   hitstopActive,
   shake
@@ -345,8 +346,11 @@ function applyStageToEnemies() {
   const bossStage = game.stage % 3 === 0
   let bossAssigned = false
   const maxHp = enemyMaxHp()
+  const zone = stageZone()
   for (const e of enemies) {
     const st = e.state
+    st.homeX = Math.max(-3.5, Math.min(14, zone.x + (Math.random() - 0.5) * 7))
+    st.homeZ = Math.max(-33, Math.min(6, zone.z - 3 - Math.random() * 8))
     if (bossStage && !bossAssigned) {
       st.boss = true
       st.maxHp = bossMaxHp()
@@ -356,6 +360,7 @@ function applyStageToEnemies() {
       st.x = st.homeX
       st.z = st.homeZ
       st.mode = 'wander'
+      st.timer = 2 + Math.random() * 2
       st.growled = false
       if (st.refs) {
         st.refs.group.current.visible = true
@@ -373,6 +378,10 @@ function applyStageToEnemies() {
     st.maxHp = maxHp
     if (st.alive) {
       st.hp = Math.min(maxHp, Math.max(st.hp, maxHp * 0.6))
+      st.x = st.homeX
+      st.z = st.homeZ
+      st.mode = 'wander'
+      st.timer = 2 + Math.random() * 2
       if (st.refs && st.refs.group.current) st.refs.group.current.scale.set(1, 1, 1)
     }
   }

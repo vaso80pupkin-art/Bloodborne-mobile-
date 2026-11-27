@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from 'react'
+import React, { Suspense, useMemo, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
 import * as THREE from 'three'
@@ -19,7 +19,7 @@ import { Cathedral } from './Cathedral.jsx'
 import { Graveyard } from './Graveyard.jsx'
 import { Hunter } from './Hunter.jsx'
 import { Enemies } from './Enemies.jsx'
-import { game } from '../game/store.js'
+import { game, stageZone } from '../game/store.js'
 import { Rain } from './Rain.jsx'
 import { Puddles } from './Puddles.jsx'
 import { Crows } from './Crows.jsx'
@@ -66,8 +66,26 @@ function Moon() {
 }
 
 function Moonlight() {
+  const ref = useRef(null)
+  const target = useMemo(() => new THREE.Color('#8a5a5a'), [])
+  useFrame(({ scene }, delta) => {
+    const l = ref.current
+    if (!l) return
+    const zone = stageZone()
+    const k = Math.min(1, delta * 1.2)
+    target.set(zone.moon)
+    l.color.lerp(target, k)
+    l.intensity += (zone.moonI - l.intensity) * k
+    const fog = scene.fog
+    if (fog) {
+      target.set(zone.fog)
+      fog.color.lerp(target, k)
+      fog.density += (zone.density - fog.density) * k
+    }
+  })
   return (
     <directionalLight
+      ref={ref}
       position={[-30, 45, -40]}
       intensity={0.6}
       color="#8a5a5a"
@@ -83,8 +101,11 @@ function Moonlight() {
 }
 
 function FollowCam() {
-  useFrame(({ camera }, delta) => {
-    if (typeof window !== 'undefined') window.__threeCam = camera
+  useFrame(({ camera, scene }, delta) => {
+    if (typeof window !== 'undefined') {
+      window.__threeCam = camera
+      window.__threeScene = scene
+    }
     const dt = Math.min(delta, 0.05)
     const now = performance.now()
     const k = 1 - Math.pow(0.002, dt)
