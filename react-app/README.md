@@ -25,5 +25,5 @@ npm run preview  # локальный просмотр сборки
 
 1. Атмосфера: туман, ночное небо, брусчатка, мерцающие фонари ✅ (стартовая сцена)
 2. Пост-обработка: Bloom, цветокоррекция, Vignette ✅ (@react-three/postprocessing)
-3. Персонаж-охотник: .glb из Blender, `useAnimations` (Idle / Run / Dodge / Attack)
+3. Персонаж-охотник: `hunter_light.glb` загружен через `useGLTF` + процедурный idle ✅ (скелетные Idle/Run/Dodge/Attack — при наличии rigged-модели с анимациями)
 4. Боевая система и HUD на React

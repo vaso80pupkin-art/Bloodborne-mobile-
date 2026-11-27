@@ -15,6 +15,7 @@ import { CitySilhouettes } from './CitySilhouettes.jsx'
 import { GroundFog } from './GroundFog.jsx'
 import { Cathedral } from './Cathedral.jsx'
 import { Graveyard } from './Graveyard.jsx'
+import { Hunter } from './Hunter.jsx'
 import { useFrame } from '@react-three/fiber'
 
 function Moon() {
@@ -78,6 +79,7 @@ export function YharnamScene() {
         <Cathedral />
         <Graveyard />
         <StreetLamp position={[2.5, 0, 2]} />
+        <Hunter position={[1.35, 0, 3.1]} />
         <StreetLamp position={[-7, 0, -6]} castShadow={false} />
         <StreetLamp position={[4, 0, -14]} castShadow={false} />
         <GroundFog />
