@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 const LAMP_HEIGHT = 4.2
 
@@ -18,7 +19,7 @@ function LanternGlass() {
   )
 }
 
-export function StreetLamp({ position = [0, 0, 0] }) {
+export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
   const lightRef = useRef(null)
   const glassRef = useRef(null)
   const flickerSeed = useRef(Math.random() * 100)
@@ -59,7 +60,6 @@ export function StreetLamp({ position = [0, 0, 0] }) {
         <group ref={glassRef} position={[0, -0.32, 0]}>
           <LanternGlass />
         </group>
-
         <mesh position={[0, -0.62, 0]} castShadow>
           <cylinderGeometry args={[0.05, 0.12, 0.12, 6]} />
           <meshStandardMaterial color="#141416" roughness={0.6} metalness={0.7} />
@@ -71,6 +71,18 @@ export function StreetLamp({ position = [0, 0, 0] }) {
         </mesh>
       </group>
 
+      <mesh position={[0, (LAMP_HEIGHT + 0.4) / 2, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[1.7, LAMP_HEIGHT + 0.4, 24, 1, true]} />
+        <meshBasicMaterial
+          color="#ff9a3a"
+          transparent
+          opacity={0.06}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
       <pointLight
         ref={lightRef}
         position={[0, LAMP_HEIGHT + 0.05, 0]}
@@ -78,7 +90,7 @@ export function StreetLamp({ position = [0, 0, 0] }) {
         intensity={26}
         distance={18}
         decay={2}
-        castShadow
+        castShadow={castShadow}
         shadow-mapSize={[512, 512]}
         shadow-bias={-0.004}
       />

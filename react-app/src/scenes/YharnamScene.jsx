@@ -12,6 +12,10 @@ import { CobblestoneGround } from './CobblestoneGround.jsx'
 import { StreetLamp } from './StreetLamp.jsx'
 import { AshParticles } from './AshParticles.jsx'
 import { CitySilhouettes } from './CitySilhouettes.jsx'
+import { GroundFog } from './GroundFog.jsx'
+import { Cathedral } from './Cathedral.jsx'
+import { Graveyard } from './Graveyard.jsx'
+import { useFrame } from '@react-three/fiber'
 
 function Moon() {
   return (
@@ -42,6 +46,16 @@ function Moonlight() {
   )
 }
 
+function CameraDrift() {
+  useFrame(({ clock, camera }) => {
+    const t = clock.getElapsedTime()
+    camera.position.y = 3.2 + Math.sin(t * 0.4) * 0.05
+    camera.position.x = Math.sin(t * 0.21) * 0.4
+    camera.lookAt(0, 2.4, -8)
+  })
+  return null
+}
+
 export function YharnamScene() {
   return (
     <Canvas
@@ -61,9 +75,14 @@ export function YharnamScene() {
         <Moonlight />
         <CobblestoneGround />
         <CitySilhouettes />
+        <Cathedral />
+        <Graveyard />
         <StreetLamp position={[2.5, 0, 2]} />
-        <StreetLamp position={[-7, 0, -6]} />
+        <StreetLamp position={[-7, 0, -6]} castShadow={false} />
+        <StreetLamp position={[4, 0, -14]} castShadow={false} />
+        <GroundFog />
         <AshParticles />
+        <CameraDrift />
 
         <EffectComposer multisampling={0}>
           <Bloom
