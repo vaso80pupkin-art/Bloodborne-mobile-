@@ -71,7 +71,7 @@ export function StreetLamp({ position = [0, 0, 0], castShadow = true }) {
         </mesh>
       </group>
 
-      <mesh position={[0, (LAMP_HEIGHT + 0.4) / 2, 0]} rotation={[Math.PI, 0, 0]}>
+      <mesh position={[0, (LAMP_HEIGHT + 0.4) / 2, 0]}>
         <coneGeometry args={[1.7, LAMP_HEIGHT + 0.4, 24, 1, true]} />
         <meshBasicMaterial
           color="#ff9a3a"

@@ -76,7 +76,7 @@ export function Hunter({ position = [0, 0, 0], rotationY = Math.PI / 2 }) {
         runAction.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(0.3).play()
         prev.fadeOut(0.3)
         currentRef.current = next
-        busyUntilRef.current = next === 'Run' ? Number.MAX_SAFE_INTEGER : 0
+        busyUntilRef.current = 0
       }
     }
     window.addEventListener('keydown', onKeyDown)
