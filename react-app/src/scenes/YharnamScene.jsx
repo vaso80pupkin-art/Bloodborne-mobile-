@@ -84,12 +84,22 @@ function Moonlight() {
 
 function FollowCam() {
   useFrame(({ camera }, delta) => {
+    if (typeof window !== 'undefined') window.__threeCam = camera
     const dt = Math.min(delta, 0.05)
+    const now = performance.now()
     const k = 1 - Math.pow(0.002, dt)
     const p = game.hunterPos
-    camera.position.x += (p.x - camera.position.x) * k
+    let sx = 0
+    let sy = 0
+    const shakeAge = now - game.shakeAt
+    if (shakeAge < 350) {
+      const amp = 0.14 * (1 - shakeAge / 350)
+      sx = (Math.random() - 0.5) * amp
+      sy = (Math.random() - 0.5) * amp
+    }
+    camera.position.x += (p.x + sx - camera.position.x) * k
     camera.position.z += (p.z + 7.5 - camera.position.z) * k
-    camera.position.y += (3.4 - camera.position.y) * k
+    camera.position.y += (3.4 + sy - camera.position.y) * k
     camera.lookAt(p.x, 1.9, p.z - 7)
   })
   return null

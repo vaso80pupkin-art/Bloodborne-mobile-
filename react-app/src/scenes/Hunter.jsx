@@ -4,6 +4,7 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { game, emit } from '../game/store.js'
 import { playerAttackHit } from './Enemies.jsx'
+import { playStep, playDodge, playSwing, playDied, switchMusic } from '../game/audio.js'
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/hunter_rigged.glb`
 const IDLE = 'Idle'
@@ -23,6 +24,8 @@ export function Hunter() {
   const facingRef = useRef({ x: 0, z: -1 })
   const dodgeRef = useRef({ active: false, until: 0, dirX: 0, dirZ: 0 })
   const attackHitDoneRef = useRef(false)
+  const stepAccRef = useRef(0)
+  const deadWatchRef = useRef(false)
   const lastNonceRef = useRef(game.resetNonce)
   const emittedRef = useRef({ hp: -1, stamina: -1 })
 
@@ -88,10 +91,18 @@ export function Hunter() {
       setState(game.input.run ? RUN : IDLE, THREE.LoopRepeat)
     }
 
-    if (game.dead) {
+    if (game.dead && !deadWatchRef.current) {
+      deadWatchRef.current = true
+      playDied()
+      switchMusic(true)
       if (currentRef.current !== IDLE) setState(IDLE, THREE.LoopRepeat, 0.4)
       return
     }
+    if (!game.dead && deadWatchRef.current) {
+      deadWatchRef.current = false
+      switchMusic(false)
+    }
+    if (game.dead) return
 
     if (input.attackReq > 0 && now >= busyUntilRef.current && !dodgeRef.current.active) {
       input.attackReq = 0
@@ -113,6 +124,7 @@ export function Hunter() {
           dirX: facingRef.current.x,
           dirZ: facingRef.current.z
         }
+        playDodge()
         setState('Dodge')
         emit()
       }
@@ -159,8 +171,16 @@ export function Hunter() {
       }
     } else if (moving && now >= busyUntilRef.current) {
       const speed = running ? 6.2 : 3.1
+      const prevX = posRef.current.x
+      const prevZ = posRef.current.z
       posRef.current.x += mx * speed * dt
       posRef.current.z += mz * speed * dt
+      stepAccRef.current += Math.hypot(posRef.current.x - prevX, posRef.current.z - prevZ)
+      const stepLen = running ? 2.1 : 1.5
+      if (stepAccRef.current >= stepLen) {
+        stepAccRef.current = 0
+        playStep(running)
+      }
       facingRef.current = { x: mx / mlen, z: mz / mlen }
       const targetRot = Math.atan2(-facingRef.current.x, -facingRef.current.z) + YAW_OFFSET
       if (outer) {
