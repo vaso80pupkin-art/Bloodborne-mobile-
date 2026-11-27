@@ -63,6 +63,22 @@ export function Hud() {
       >
         Yharnam · Ночной кошмар охотника
       </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 44,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          color: '#7a6a48',
+          fontSize: 12,
+          letterSpacing: 2,
+          textShadow: '0 1px 4px #000'
+        }}
+      >
+        J / F — атака · Space — перекат · R — бег
+      </div>
     </div>
   )
 }

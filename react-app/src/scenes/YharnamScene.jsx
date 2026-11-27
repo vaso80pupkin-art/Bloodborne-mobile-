@@ -79,7 +79,7 @@ export function YharnamScene() {
         <Cathedral />
         <Graveyard />
         <StreetLamp position={[2.5, 0, 2]} />
-        <Hunter position={[1.35, 0, 3.1]} />
+        <Hunter position={[1.35, 0, 3.1]} rotationY={Math.PI / 2} />
         <StreetLamp position={[-7, 0, -6]} castShadow={false} />
         <StreetLamp position={[4, 0, -14]} castShadow={false} />
         <GroundFog />

@@ -25,5 +25,7 @@ npm run preview  # локальный просмотр сборки
 
 1. Атмосфера: туман, ночное небо, брусчатка, мерцающие фонари ✅ (стартовая сцена)
 2. Пост-обработка: Bloom, цветокоррекция, Vignette ✅ (@react-three/postprocessing)
-3. Персонаж-охотник: `hunter_light.glb` загружен через `useGLTF` + процедурный idle ✅ (скелетные Idle/Run/Dodge/Attack — при наличии rigged-модели с анимациями)
+3. Персонаж-охотник: `hunter_rigged.glb` — скелет (15 костей) + клипы Idle / Run / Dodge / Attack, `useAnimations` ✅
+   - Скелет и анимации сгенерированы Blender-скриптом: `tools/blender/rig_hunter.py` (Blender 4.x+, headless bpy)
+   - Исходник `hunter_light.glb` — meshopt: для Blender его распаковывает `tools/blender/decompress_glb.mjs` (Node, `npm i meshoptimizer`)
 4. Боевая система и HUD на React
